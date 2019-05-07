@@ -43,7 +43,9 @@ function unlink(self, cell) {
 
 function isLinked(self, cell) {
   try {
-    List.find(cell, self[/* links */1]);
+    List.find((function (c) {
+            return Caml_obj.caml_equal(c, cell);
+          }), self[/* links */1]);
     return true;
   }
   catch (exn){
@@ -59,53 +61,68 @@ var compare = Caml_obj.caml_compare;
 
 var CellMap = $$Map.Make(/* module */[/* compare */compare]);
 
-var a_000 = /* coordinate : tuple */[
-  1,
-  1
-];
+function addCell(c, g) {
+  return /* record */[
+          /* rows */g[/* rows */0],
+          /* cols */g[/* cols */1],
+          /* grid */Curry._3(CellMap[/* add */3], c[/* coordinate */0], c, g[/* grid */2])
+        ];
+}
 
-var a_002 = /* neighbors : record */[
-  /* n */undefined,
-  /* e */undefined,
-  /* s */undefined,
-  /* w */undefined
-];
+function getCell(c, param) {
+  var exit = 0;
+  var cell;
+  try {
+    cell = Curry._2(CellMap[/* find */21], c, param[/* grid */2]);
+    exit = 1;
+  }
+  catch (exn){
+    if (exn === Caml_builtin_exceptions.not_found) {
+      return undefined;
+    } else {
+      throw exn;
+    }
+  }
+  if (exit === 1) {
+    return cell;
+  }
+  
+}
 
-var a = /* record */[
-  a_000,
-  /* links : [] */0,
-  a_002
-];
-
-var b_000 = /* coordinate : tuple */[
-  2,
-  2
-];
-
-var b_002 = /* neighbors : record */[
-  /* n */undefined,
-  /* e */undefined,
-  /* s */undefined,
-  /* w */undefined
-];
-
-var b = /* record */[
-  b_000,
-  /* links : [] */0,
-  b_002
-];
-
-var g = Curry._2(CellMap[/* add */3], /* tuple */[
-      1,
-      1
-    ], a);
+function getNeighbors(self, g) {
+  var match = self[/* coordinate */0];
+  var col = match[1];
+  var row = match[0];
+  return /* record */[
+          /* coordinate */self[/* coordinate */0],
+          /* links */self[/* links */1],
+          /* neighbors : record */[
+            /* n */getCell(/* tuple */[
+                  row - 1 | 0,
+                  col
+                ], g),
+            /* e */getCell(/* tuple */[
+                  row,
+                  col + 1 | 0
+                ], g),
+            /* s */getCell(/* tuple */[
+                  row + 1 | 0,
+                  col
+                ], g),
+            /* w */getCell(/* tuple */[
+                  row,
+                  col - 1 | 0
+                ], g)
+          ]
+        ];
+}
 
 exports.make = make;
 exports.link = link;
 exports.unlink = unlink;
 exports.isLinked = isLinked;
 exports.CellMap = CellMap;
-exports.a = a;
-exports.b = b;
-exports.g = g;
+exports.addCell = addCell;
+exports.getCell = getCell;
+exports.getNeighbors = getNeighbors;
 /* CellMap Not a pure module */

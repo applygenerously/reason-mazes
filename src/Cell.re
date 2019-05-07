@@ -28,8 +28,8 @@ let unlink = (self, cell) => {
   links: List.filter(l => l !== cell, self.links),
 };
 
-let isLinked = (self, cell): bool => {
-  switch (List.find(cell, self.links)) {
+let isLinked = (self: t, cell: t): bool => {
+  switch (List.find(c => c == cell, self.links)) {
   | exception Not_found => false
   | _ => true
   };
@@ -41,10 +41,33 @@ module CellMap =
     let compare = compare;
   });
 
-type grid = CellMap.t(t);
+type grid = {
+  rows: int,
+  cols: int,
+  grid: CellMap.t(t),
+};
 
-let a = make((1, 1));
+let addCell = (c: t, g: grid): grid => {
+  ...g,
+  grid: CellMap.add(c.coordinate, c, g.grid),
+};
 
-let b = make((2, 2));
+let getCell = (c: Coordinate.t, {grid}: grid): option(t) => {
+  switch (CellMap.find(c, grid)) {
+  | cell => Some(cell)
+  | exception Not_found => None
+  };
+};
 
-let g = CellMap.add(a.coordinate, a);
+let getNeighbors = (self: t, g: grid): t => {
+  let (row, col) = self.coordinate;
+  {
+    ...self,
+    neighbors: {
+      n: getCell((row - 1, col), g),
+      e: getCell((row, col + 1), g),
+      s: getCell((row + 1, col), g),
+      w: getCell((row, col - 1), g),
+    },
+  };
+};
